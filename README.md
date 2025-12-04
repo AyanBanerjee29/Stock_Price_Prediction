@@ -3,13 +3,13 @@
 This project implements the **SAMBA (State-space Mamba with Graph Neural Networks)** architecture for stock price forecasting. It includes a complete pipeline for downloading financial data, training a model with hyperparameter tuning, evaluating performance, and generating future stock price predictions.
 
 ## 📋 Table of Contents
-1. [Installation](#1-installation)
-2. [Project Structure](#2-project-structure)
-3. [Step 1: Create Dataset](#3-step-1-create-dataset)
-4. [Step 2: Training & Development](#4-step-2-training--development)
-5. [Step 3: Testing & Evaluation](#5-step-3-testing--evaluation)
-6. [Step 4: Production Training](#6-step-4-production-training)
-7. [Step 5: Future Prediction](#7-step-5-future-prediction)
+1. Installation
+2. Project Structure
+3. Step 1: Create Dataset
+4. Step 2: Training & Development
+5. Step 3: Testing & Evaluation
+6. Step 4: Production Training
+7. Step 5: Future Prediction
 
 ---
 
@@ -17,12 +17,14 @@ This project implements the **SAMBA (State-space Mamba with Graph Neural Network
 
 Ensure you have Python installed (3.8+ recommended).
 
-1. **Clone the repository** (if applicable) or navigate to your project folder.
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-2. Project Structure
-Plaintext
+1. Clone the repository (if applicable) or navigate to your project folder.
+2. Install dependencies:
+
+pip install -r requirements.txt
+
+---
+
+## 2. Project Structure
 
 .
 ├── create_feature_dataset.py   # Script to download and process raw data
@@ -35,90 +37,117 @@ Plaintext
 ├── models/                     # SAMBA and Mamba model definitions
 ├── trainer/                    # Training loop implementation
 └── utils/                      # Utility functions (metrics, logging, etc.)
-3. Step 1: Create Dataset
-Before training, you must download the raw financial data and generate the feature dataset. This script downloads data from Yahoo Finance (tickers like ^NSEI, ^GSPC, INR=X, etc.) and calculates technical indicators (RSI, MACD, Bollinger Bands).
 
-Run the command:
+---
 
-Bash
+## 3. Step 1: Create Dataset
+
+This script downloads raw financial data from Yahoo Finance (tickers like ^NSEI, ^GSPC, INR=X, etc.) and computes technical indicators (RSI, MACD, Bollinger Bands).
+
+Run:
 
 python create_feature_dataset.py
-Output: Creates a file at Dataset/NIFTY50_features_wide.csv.
 
-Note: This dataset contains NIFTY 50 data combined with global indices and technical indicators.
+Output:
+Creates a file at:
 
-4. Step 2: Training & Development
-This mode splits the data (80% Dev, 20% Test). It performs hyperparameter tuning on the Dev set, finds the best parameters, and trains a validation model.
+Dataset/NIFTY50_features_wide.csv
 
-Run the command:
+This dataset contains NIFTY50 data merged with global indices and technical indicators.
 
-Bash
+---
+
+## 4. Step 2: Training & Development
+
+This phase performs:
+
+- Train/Dev split (80% Dev, 20% Test)
+- Hyperparameter tuning
+- Dev model training
+
+Run:
 
 python main.py --mode train
-What this does:
 
-Loads data from Dataset/NIFTY50_features_wide.csv.
+What happens:
 
-Splits data into Dev (80%) and Test (20%).
+- Data loaded from Dataset/NIFTY50_features_wide.csv
+- Grid search runs for learning rate, hidden_dim, etc.
+- Best parameters saved to:
 
-Runs a grid search for hyperparameters (Learning Rate, Hidden Dim, etc.).
+final_model_outputs/best_params.json
 
-Saves the best parameters to final_model_outputs/best_params.json.
+- Dev model saved to:
 
-Trains a model on the 80% Dev set and saves it to final_model_outputs/dev_samba_model.pth.
+final_model_outputs/dev_samba_model.pth
 
-5. Step 3: Testing & Evaluation
-Once you have a trained "Dev" model, you can evaluate its performance on the unseen 20% test set.
+---
 
-Run the command:
+## 5. Step 3: Testing & Evaluation
 
-Bash
+Evaluate the Dev-trained model on the unseen 20% Test split.
+
+Run:
 
 python main.py --mode test
-What this does:
 
-Loads the model from final_model_outputs/dev_samba_model.pth.
+This step:
 
-Evaluates it on the held-out 20% Test data.
+- Loads dev_samba_model.pth
+- Computes MAE, RMSE, IC (Information Coefficient)
+- Saves prediction plots such as:
 
-Prints metrics: MAE, RMSE, and IC (Information Coefficient).
+final_model_outputs/test_plot_day_1.png
 
-Generates and saves prediction plots (e.g., test_plot_day_1.png) to final_model_outputs/.
+---
 
-6. Step 4: Production Training
-When you are satisfied with the model's performance, train a "Production" model using 100% of the available data. This model is intended for making real future predictions.
+## 6. Step 4: Production Training
 
-Run the command:
+Train the model using 100% of available data.
 
-Bash
+Run:
 
 python main.py --mode production
-What this does:
 
-Loads the best hyperparameters found in Step 2.
+This step:
 
-Trains the SAMBA model on the entire dataset.
+- Loads best hyperparameters found in Step 2
+- Trains full SAMBA model on the entire dataset
+- Saves production model to:
 
-Saves the final model to final_model_outputs/production_samba_model.pth.
+final_model_outputs/production_samba_model.pth
 
-7. Step 5: Future Prediction
-Use the production model to forecast stock prices for the next 7 business days (or configured horizon).
+---
 
-Run the command:
+## 7. Step 5: Future Prediction
 
-Bash
+Predict the next 7 business days using the trained production model.
+
+Run:
 
 python predict_future.py
-What this does:
 
-Loads final_model_outputs/production_samba_model.pth.
+This script:
 
-Loads the latest data from Dataset/NIFTY50_features_wide.csv.
+- Loads production_samba_model.pth
+- Loads the full dataset
+- Extracts the latest 60-day window (lookback)
+- Predicts the next 7 business days
+- Saves results to:
 
-Takes the most recent 60-day window (lookback) from the dataset.
+final_model_outputs/next_week_forecast.csv
 
-Predicts the closing price for the next 7 days.
+---
 
-Prints the forecast dates and prices to the console.
+## ✔ Summary
 
-Saves the results to final_model_outputs/next_week_forecast.csv.
+This repository provides a fully automated pipeline:
+
+- Dataset creation
+- Hyperparameter tuning
+- Model evaluation
+- Full-data production training
+- Future forecasting
+
+All outputs (models, metrics, plots, forecasts) are stored in final_model_outputs/.
+
